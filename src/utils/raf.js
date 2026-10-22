@@ -6,8 +6,11 @@ export default function raf(callback) {
       rendering = true;
 
       requestAnimationFrame(() => {
-        callback(...args);
-        rendering = false;
+        try {
+          callback(...args);
+        } finally {
+          rendering = false;
+        }
       });
     }
   };

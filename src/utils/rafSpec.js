@@ -62,4 +62,29 @@ describe('The raf utility function', () => {
         expect(throttledCallback).toHaveBeenCalledTimes(2);
       });
   });
+  it('Allows later calls if the callback throws', () => {
+    const animationFrames = [];
+    const callback = jasmine.createSpy('callback').and.callFake(() => {
+      if (callback.calls.count() === 1) {
+        throw new Error('render failed');
+      }
+    });
+    const throttledFunction = raf(callback);
+    spyOn(window, 'requestAnimationFrame').and.callFake((animationFrame) => {
+      animationFrames.push(animationFrame);
+    });
+
+    throttledFunction();
+    expect(() => animationFrames.shift()()).toThrowError('render failed');
+
+    throttledFunction();
+
+    expect(window.requestAnimationFrame).toHaveBeenCalledTimes(2);
+    const nextAnimationFrame = animationFrames.shift();
+    expect(nextAnimationFrame).toEqual(jasmine.any(Function));
+    if (nextAnimationFrame) {
+      nextAnimationFrame();
+    }
+    expect(callback).toHaveBeenCalledTimes(2);
+  });
 });
